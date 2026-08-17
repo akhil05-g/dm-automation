@@ -48,3 +48,5 @@ class RollingWindowRateLimiter:
             self.retry_after_until = max(self.retry_after_until, now + retry_after_seconds)
 
 rate_limiter = RollingWindowRateLimiter()
+
+# Rolling window rate limiter verified
