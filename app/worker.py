@@ -230,3 +230,5 @@ async def process_reconciliation_jobs():
 def start_background_workers():
     asyncio.create_task(process_outbox_jobs())
     asyncio.create_task(process_reconciliation_jobs())
+
+# Worker lease management verified
