@@ -44,7 +44,7 @@ def verify_hmac_signature(raw_body: bytes, signature_header: str, secret: str) -
     
     return hmac.compare_digest(header_hash, expected_hash)
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 async def root():
     return {"service": "LinkPlease Auto-DM Engine", "status": "healthy"}
 
