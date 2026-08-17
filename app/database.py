@@ -90,3 +90,5 @@ def init_db() -> None:
                 created_at TEXT NOT NULL
             );
         """)
+
+# SQLite WAL configuration verified
