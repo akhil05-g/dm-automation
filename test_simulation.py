@@ -2,17 +2,18 @@ import time
 import httpx
 import sys
 
-PSEUDOGRAM_BASE_URL = "https://pseudogram-api.onrender.com"
+from app.config import PSEUDOGRAM_API_KEY, PSEUDOGRAM_BASE_URL
 
 def run_simulation(local_app_url: str, count: int = 500, duration_seconds: int = 10):
     webhook_url = f"{local_app_url.rstrip('/')}/webhook"
     print(f"Triggering simulation on {webhook_url} with {count} events over {duration_seconds}s...")
     
+    headers = {"X-API-Key": PSEUDOGRAM_API_KEY}
     res = httpx.post(f"{PSEUDOGRAM_BASE_URL}/v1/simulate/start", json={
         "webhook_url": webhook_url,
         "count": count,
         "duration_seconds": duration_seconds
-    })
+    }, headers=headers)
     
     print(f"Simulation trigger response: {res.status_code} {res.text}")
     if res.status_code != 200:
