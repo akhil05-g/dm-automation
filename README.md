@@ -2,28 +2,26 @@
 
 Event-driven backend for reliable, rate-limited social engagement automation.
 
-Built as part of the LinkPlease Tech Intern assignment.
-
 ---
 
 ## What I Built
 
 I built **Engage Flow**, a resilient backend service that automates creator engagement workflows based on social media comments.
 
-When Instagram users comment specific keywords (e.g. `PRICE`) on a creator's post, Engage Flow automatically ingests the webhook event, matches automation rules, and dispatches Direct Messages (DMs) to the commenter—even under high concurrency bursts, out-of-order delivery, transient 500 errors, and strict API rate limits.
+When users comment specific keywords (e.g. `PRICE`) on a creator's post, Engage Flow automatically ingests the webhook event, matches automation rules, and dispatches Direct Messages (DMs) to the commenter—even under high concurrency bursts, out-of-order delivery, transient server errors, and strict platform rate limits.
 
 ---
 
-## Key Architectural Features (Part A + B + C)
+## Key Architectural Features
 
-1. **Fast Webhook Ingestion (<20ms):** Validates HMAC-SHA256 signature, persists events to disk immediately, and responds with `200 OK` in under 20ms to prevent dropped webhooks under burst load.
+1. **Fast Webhook Ingestion (<20ms):** Validates HMAC-SHA256 signatures, persists events to disk immediately, and responds with `200 OK` in under 20ms to prevent dropped webhooks under burst load.
 2. **Durable Outbox State Machine:** Every DM attempt is recorded as a job state in SQLite (`pending` $\rightarrow$ `sending` $\rightarrow$ `remote_queued` $\rightarrow$ `delivered` / `retry_wait` / `cancelled` / `failed`).
 3. **Double-Layer Atomic Deduplication:** 
    - Event-level deduplication via `events.event_id` unique constraint.
    - User-rule deduplication via composite unique index `(user_id, rule_id)` preventing race conditions.
-4. **Adaptive Rolling-Window Rate Limiter:** Strictly enforces the 10 requests per 60-second rolling window without deadlocking worker loops, while dynamically respecting `Retry-After` headers.
+4. **Adaptive Rolling-Window Rate Limiter:** Strictly enforces a 10 requests per 60-second rolling window without deadlocking worker loops, while dynamically respecting `Retry-After` headers.
 5. **Deletion Tombstones (`comment.deleted`):** Solves out-of-order deletion events by storing tombstones in `deleted_comments` to cancel pending DM jobs prior to dispatch.
-6. **Delivery Reconciliation Engine:** Asynchronously polls `GET /v1/dm/{dm_id}` to verify true terminal status (`delivered` or `failed`) instead of trusting `202 Accepted`.
+6. **Delivery Reconciliation Engine:** Asynchronously polls the delivery status API to verify true terminal status (`delivered` or `failed`) instead of trusting transient acceptance responses.
 7. **Crash-Proof Lease Recovery:** Jobs locked in `sending` status automatically revert to `pending` if a worker crashes before completion.
 
 ---
@@ -31,7 +29,7 @@ When Instagram users comment specific keywords (e.g. `PRICE`) on a creator's pos
 ## API Endpoints
 
 ### 1. `POST /webhook`
-Ingests comment events from PseudoGram with HMAC-SHA256 signature verification (`X-PseudoGram-Signature`).
+Ingests comment events with HMAC-SHA256 signature verification (`X-PseudoGram-Signature`).
 
 ### 2. `POST /rules`
 Registers a keyword automation rule.
@@ -94,6 +92,6 @@ python -m pytest -v
 
 ---
 
-## Documentation & Edge Cases
+## System Resilience & Failure Boundaries
 
 For an explicit analysis of system boundaries, failure windows, and edge cases, see [FAILURES.md](FAILURES.md).
